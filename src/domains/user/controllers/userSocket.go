@@ -3,6 +3,7 @@ package userSocket
 import (
 	"bytes"
 	"log"
+	"net"
 	"net/http"
 	_ "net/http/pprof"
 
@@ -18,6 +19,14 @@ type UserSocketController struct {
 	Response http.ResponseWriter
 	Request  *http.Request
 	Epoll    *_epoll.Epoll
+}
+
+func (cfg *UserSocketController) removeConn(conn net.Conn, userId string) {
+	if err := cfg.Epoll.Remove(conn, userId); err != nil {
+		log.Printf("Failed to remove %v", err)
+	}
+
+	conn.Close()
 }
 
 func (cfg *UserSocketController) SimpleSocket() {
@@ -37,7 +46,7 @@ func (cfg *UserSocketController) SimpleSocket() {
 	}
 
 	go func() {
-		defer conn.Close()
+		defer cfg.removeConn(conn, userId)
 
 		for {
 			_, err := cfg.Epoll.Wait()
@@ -92,12 +101,6 @@ func (cfg *UserSocketController) WriteToAllClients() {
 		for {
 			receivedMessage, op, err := wsutil.ReadClientData(conn)
 			if err != nil {
-				log.Printf("Error read message %v", err)
-
-				if err := cfg.Epoll.Remove(conn, userId); err != nil {
-					log.Printf("Failed to remove %v", err)
-				}
-
 				break
 			}
 
@@ -110,6 +113,7 @@ func (cfg *UserSocketController) WriteToAllClients() {
 
 				err = wsutil.WriteServerMessage(epConn, op, receivedMessage)
 				if err != nil {
+					cfg.removeConn(conn, userId)
 					epConn.Close()
 					continue
 				}
@@ -138,12 +142,6 @@ func (cfg *UserSocketController) WriteToAnUser() {
 		for {
 			receivedMessage, op, err := wsutil.ReadClientData(conn)
 			if err != nil {
-				log.Printf("Error read message %v", err)
-
-				if err := cfg.Epoll.Remove(conn, userId); err != nil {
-					log.Printf("Failed to remove %v", err)
-				}
-
 				break
 			}
 
@@ -156,6 +154,7 @@ func (cfg *UserSocketController) WriteToAnUser() {
 
 				err = wsutil.WriteServerMessage(epConn, op, receivedMessage)
 				if err != nil {
+					cfg.removeConn(conn, userId)
 					epConn.Close()
 					continue
 				}
