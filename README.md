@@ -24,7 +24,7 @@
 
 ## Case 3: Publish to A Specific User
 
-![how it Works](https://raw.githubusercontent.com/castmetal/websockets-in-go-boilerplate/main/WebsocketFlow3.png)
+![how it Works](https://raw.githubusercontent.com/castmetal/websocket-in-go-boilerplate/main/WebsocketFlow3.png)
 
 - Publish a message to a specific user with TCP active connections. This example is common when you need to send to a user about changes in your contents, process, states or rules.
 
