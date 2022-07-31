@@ -2,7 +2,7 @@
 
 ## Case 1: Publish Message and Receive a Result
 
-![how it Works](https://raw.githubusercontent.com/castmetal/websockets-in-go-boilerplate/main/WebsocketFlow1.png)
+![how it Works](https://raw.githubusercontent.com/castmetal/websocket-in-go-boilerplate/main/WebsocketFlow1.png)
 
 > Easy Websocket Boilerplate in Go
 
@@ -16,7 +16,7 @@
 
 ## Case 2: Publish to All Clients
 
-![how it Works](https://raw.githubusercontent.com/castmetal/websockets-in-go-boilerplate/main/WebsocketFlow2.png)
+![how it Works](https://raw.githubusercontent.com/castmetal/websocket-in-go-boilerplate/main/WebsocketFlow2.png)
 
 - Publish a message to all TCP active connections. This example is common when you need to send to all clients a state or a new notify message about a new content and you need update your app with this
 
