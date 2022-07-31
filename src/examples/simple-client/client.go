@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"time"
 
-	_utils "websocket-in-go-example/src/utils"
+	_utils "websocket-in-go-boilerplate/src/utils"
 
 	"github.com/gorilla/websocket"
 )

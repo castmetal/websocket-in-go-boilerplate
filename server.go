@@ -12,9 +12,9 @@ import (
 	_ "net/http/pprof"
 	"syscall"
 
-	_userSocket "websocket-in-go-example/src/domains/user/controllers"
-	_epoll "websocket-in-go-example/src/epoll"
-	_utils "websocket-in-go-example/src/utils"
+	_userSocket "websocket-in-go-boilerplate/src/domains/user/controllers"
+	_epoll "websocket-in-go-boilerplate/src/epoll"
+	_utils "websocket-in-go-boilerplate/src/utils"
 )
 
 var epoller *_epoll.Epoll

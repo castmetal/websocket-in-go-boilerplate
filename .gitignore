@@ -1,5 +1,5 @@
 .idea/
-websocket-in-go-example/
+websocket-in-go-boilerplate/
 .env
 bin/
-websocket-in-go-example
+websocket-in-go-boilerplate

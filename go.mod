@@ -1,4 +1,4 @@
-module websocket-in-go-example
+module websocket-in-go-boilerplate
 
 go 1.18
 

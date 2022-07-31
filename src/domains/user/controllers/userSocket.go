@@ -6,9 +6,9 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	_use_cases "websocket-in-go-example/src/domains/user/use-cases"
-	_epoll "websocket-in-go-example/src/epoll"
-	_utils "websocket-in-go-example/src/utils"
+	_use_cases "websocket-in-go-boilerplate/src/domains/user/use-cases"
+	_epoll "websocket-in-go-boilerplate/src/epoll"
+	_utils "websocket-in-go-boilerplate/src/utils"
 
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
