@@ -77,6 +77,16 @@ func main() {
 		userSocketCfg.WriteToAllClients()
 	})
 
+	http.HandleFunc("/ws/writeToAnUser", func(w http.ResponseWriter, r *http.Request) {
+		userSocketCfg := _userSocket.UserSocketController{
+			Response: w,
+			Request:  r,
+			Epoll:    epoller,
+		}
+
+		userSocketCfg.WriteToAnUser()
+	})
+
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")

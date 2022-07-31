@@ -22,12 +22,14 @@ type UserSocketController struct {
 
 func (cfg *UserSocketController) SimpleSocket() {
 	// Upgrade connection
+	userId := cfg.Request.Header.Get(_utils.SystemParams.AUTH_HEADER)
+
 	conn, _, _, err := ws.UpgradeHTTP(cfg.Request, cfg.Response)
 	if err != nil {
 		return
 	}
 
-	if err := cfg.Epoll.Add(conn); err != nil {
+	if err := cfg.Epoll.Add(conn, userId); err != nil {
 		log.Printf("Failed to add connection %v", err)
 		conn.Close()
 
@@ -38,11 +40,16 @@ func (cfg *UserSocketController) SimpleSocket() {
 		defer conn.Close()
 
 		for {
+			_, err := cfg.Epoll.Wait()
+			if err != nil {
+				continue
+			}
+
 			msg, op, err := wsutil.ReadClientData(conn)
 			if err != nil {
 				log.Printf("Error read message %v", err)
 
-				if err := cfg.Epoll.Remove(conn); err != nil {
+				if err := cfg.Epoll.Remove(conn, userId); err != nil {
 					log.Printf("Failed to remove %v", err)
 				}
 
@@ -71,6 +78,8 @@ func (cfg *UserSocketController) SimpleSocket() {
 
 func (cfg *UserSocketController) WriteToAllClients() {
 	// Upgrade connection
+	userId := cfg.Request.Header.Get(_utils.SystemParams.AUTH_HEADER)
+
 	conn, _, _, err := ws.UpgradeHTTP(cfg.Request, cfg.Response)
 	if err != nil {
 		log.Fatal(err)
@@ -85,12 +94,60 @@ func (cfg *UserSocketController) WriteToAllClients() {
 			if err != nil {
 				log.Printf("Error read message %v", err)
 
-				if err := cfg.Epoll.Remove(conn); err != nil {
+				if err := cfg.Epoll.Remove(conn, userId); err != nil {
 					log.Printf("Failed to remove %v", err)
 				}
+
+				break
 			}
 
 			connections := cfg.Epoll.Connections
+
+			for _, epConn := range connections {
+				if epConn == nil {
+					break
+				}
+
+				err = wsutil.WriteServerMessage(epConn, op, receivedMessage)
+				if err != nil {
+					epConn.Close()
+					continue
+				}
+
+			}
+
+			break
+		}
+
+	}()
+}
+
+func (cfg *UserSocketController) WriteToAnUser() {
+	// Upgrade connection
+	userId := cfg.Request.Header.Get(_utils.SystemParams.AUTH_HEADER)
+
+	conn, _, _, err := ws.UpgradeHTTP(cfg.Request, cfg.Response)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	go func() {
+		defer conn.Close()
+
+		for {
+			receivedMessage, op, err := wsutil.ReadClientData(conn)
+			if err != nil {
+				log.Printf("Error read message %v", err)
+
+				if err := cfg.Epoll.Remove(conn, userId); err != nil {
+					log.Printf("Failed to remove %v", err)
+				}
+
+				break
+			}
+
+			connections := cfg.Epoll.UserConnections.UserConn[userId]
 
 			for _, epConn := range connections {
 				if epConn == nil {

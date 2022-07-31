@@ -10,10 +10,15 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+type UserConnections struct {
+	UserConn map[string]map[int]net.Conn
+}
+
 type Epoll struct {
-	fd          int
-	Connections map[int]net.Conn
-	lock        *sync.RWMutex
+	fd              int
+	Connections     map[int]net.Conn
+	lock            *sync.RWMutex
+	UserConnections UserConnections
 }
 
 func MkEpoll() (*Epoll, error) {
@@ -26,10 +31,13 @@ func MkEpoll() (*Epoll, error) {
 		fd:          fd,
 		lock:        &sync.RWMutex{},
 		Connections: make(map[int]net.Conn),
+		UserConnections: UserConnections{
+			UserConn: make(map[string]map[int]net.Conn),
+		},
 	}, nil
 }
 
-func (e *Epoll) Add(conn net.Conn) error {
+func (e *Epoll) Add(conn net.Conn, userId string) error {
 	// Extract file descriptor associated with the connection
 	fd := websocketFD(conn)
 	err := unix.EpollCtl(e.fd, syscall.EPOLL_CTL_ADD, fd, &unix.EpollEvent{Events: unix.POLLIN | unix.POLLHUP, Fd: int32(fd)})
@@ -42,6 +50,12 @@ func (e *Epoll) Add(conn net.Conn) error {
 
 	e.Connections[fd] = conn
 
+	if len(e.UserConnections.UserConn[userId]) <= 0 {
+		e.UserConnections.UserConn[userId] = make(map[int]net.Conn)
+	}
+
+	e.UserConnections.UserConn[userId][fd] = conn
+
 	if len(e.Connections)%100 == 0 {
 		log.Printf("Total number of connections: %v", len(e.Connections))
 	}
@@ -49,7 +63,7 @@ func (e *Epoll) Add(conn net.Conn) error {
 	return nil
 }
 
-func (e *Epoll) Remove(conn net.Conn) error {
+func (e *Epoll) Remove(conn net.Conn, userId string) error {
 	fd := websocketFD(conn)
 	err := unix.EpollCtl(e.fd, syscall.EPOLL_CTL_DEL, fd, nil)
 	if err != nil {
@@ -60,6 +74,7 @@ func (e *Epoll) Remove(conn net.Conn) error {
 	defer e.lock.Unlock()
 
 	delete(e.Connections, fd)
+	delete(e.UserConnections.UserConn[userId], fd)
 
 	if len(e.Connections)%100 == 0 {
 		log.Printf("Total number of connections: %v", len(e.Connections))

@@ -21,6 +21,15 @@
 - Publish a message to all TCP active connections. This example is common when you need to send to all clients a state or a new notify message about a new content and you need update your app with this
 
 
+
+## Case 3: Publish to A Specific User
+
+![how it Works](https://raw.githubusercontent.com/castmetal/websockets-in-go-boilerplate/main/WebsocketFlow3.png)
+
+- Publish a message to a specific user with TCP active connections. This example is common when you need to send to a user about changes in your contents, process, states or rules.
+
+## Subject
+
 - This code was developed to handle many requests and simultaneous connections
 
 ### Running at local environment
@@ -36,12 +45,24 @@
 - Run:
 
 ```sh
-    go run ./examples/simple-client/client.go YourArgMessage
+    go run ./examples/simple-client/client.go YourUserId
 ```
+
 ### Client 2
 
 - Run:
 
 ```sh
-    go run ./examples/write-to-all-clients/client.go YourArgMessage
+    go run ./examples/write-to-all-clients/client.go YourUserId
 ```
+### Client 3
+
+- Run:
+
+```sh
+    go run ./examples/write-to-an-user/client.go YourUserId
+```
+
+### To do
+
+- For further security rules, add auth header as JWT and valid iss and exp with low timestamp tls
