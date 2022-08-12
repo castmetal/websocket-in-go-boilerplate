@@ -32,6 +32,8 @@ func (cfg *UserSocketController) SimpleSocket() {
 	// Upgrade connection
 	userId := cfg.Request.Header.Get(_utils.SystemParams.AUTH_HEADER)
 
+	// TODO - for more security rules, use a middleware before and validates the auth_header with JWT, Oauth or you service provider
+
 	conn, _, _, err := ws.UpgradeHTTP(cfg.Request, cfg.Response)
 	if err != nil {
 		return
@@ -92,6 +94,8 @@ func (cfg *UserSocketController) WriteToAllClients() {
 	// Upgrade connection
 	userId := cfg.Request.Header.Get(_utils.SystemParams.AUTH_HEADER)
 
+	// TODO - for more security rules, use a middleware before and validates the auth_header with JWT, Oauth or you service provider
+
 	conn, _, _, err := ws.UpgradeHTTP(cfg.Request, cfg.Response)
 	if err != nil {
 		log.Fatal(err)
@@ -132,6 +136,8 @@ func (cfg *UserSocketController) WriteToAllClients() {
 func (cfg *UserSocketController) WriteToAnUser() {
 	// Upgrade connection
 	userId := cfg.Request.Header.Get(_utils.SystemParams.AUTH_HEADER)
+
+	// TODO - for more security rules, use a middleware before and validates the auth_header with JWT, Oauth or you service provider
 
 	conn, _, _, err := ws.UpgradeHTTP(cfg.Request, cfg.Response)
 	if err != nil {
