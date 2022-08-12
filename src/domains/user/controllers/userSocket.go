@@ -7,6 +7,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
+	_interfaces "websocket-in-go-boilerplate/src/core"
 	_use_cases "websocket-in-go-boilerplate/src/domains/user/use-cases"
 	_epoll "websocket-in-go-boilerplate/src/epoll"
 	_utils "websocket-in-go-boilerplate/src/utils"
@@ -65,12 +66,12 @@ func (cfg *UserSocketController) SimpleSocket() {
 				break
 			}
 
-			recvUserSocketMsg := &_use_cases.ReceiveUserSocketMessage{
+			var useCase _interfaces.UseCase = _use_cases.ReceiveUserSocketMessage{
 				Message: bytes.NewReader(msg),
 				UserId:  cfg.Request.Header.Get(_utils.SystemParams.AUTH_HEADER),
 			}
 
-			writeMessage, err := recvUserSocketMsg.Execute()
+			writeMessage, err := useCase.Execute()
 			if err != nil {
 				log.Printf("Failed to execute ReceiveUserSocketMessage: %v", err)
 				continue
