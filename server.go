@@ -12,8 +12,8 @@ import (
 	_ "net/http/pprof"
 	"syscall"
 
-	_interfaces "websocket-in-go-boilerplate/src/core"
-	_userSocket "websocket-in-go-boilerplate/src/domains/user/controllers"
+	_interfaces "websocket-in-go-boilerplate/src/domains/common"
+	_user "websocket-in-go-boilerplate/src/domains/user"
 	_epoll "websocket-in-go-boilerplate/src/epoll"
 	_utils "websocket-in-go-boilerplate/src/utils"
 )
@@ -59,7 +59,7 @@ func main() {
 	makeEpoll()
 
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		var ws _interfaces.WS = &_userSocket.UserSocketController{
+		var ws _interfaces.WS = &_user.UserSocketController{
 			Response: w,
 			Request:  r,
 			Epoll:    epoller,
@@ -69,7 +69,7 @@ func main() {
 	})
 
 	http.HandleFunc("/ws/writeToAll", func(w http.ResponseWriter, r *http.Request) {
-		var ws _interfaces.WS = &_userSocket.UserSocketController{
+		var ws _interfaces.WS = &_user.UserSocketController{
 			Response: w,
 			Request:  r,
 			Epoll:    epoller,
@@ -79,7 +79,7 @@ func main() {
 	})
 
 	http.HandleFunc("/ws/writeToAnUser", func(w http.ResponseWriter, r *http.Request) {
-		var ws _interfaces.WS = &_userSocket.UserSocketController{
+		var ws _interfaces.WS = &_user.UserSocketController{
 			Response: w,
 			Request:  r,
 			Epoll:    epoller,
