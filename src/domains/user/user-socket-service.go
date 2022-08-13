@@ -35,18 +35,33 @@ func NewUserSocketService(res http.ResponseWriter, r *http.Request, epoll *_epol
 	return &userWebSocketService{Response: res, Request: r, Epoll: epoll}
 }
 
-type UserSocketController struct {
-	Response http.ResponseWriter
-	Request  *http.Request
-	Epoll    *_epoll.Epoll
-}
-
 func (cfg *userWebSocketService) removeConn(conn net.Conn, userId string) {
 	if err := cfg.Epoll.Remove(conn, userId); err != nil {
 		log.Printf("Failed to remove %v", err)
 	}
 
 	conn.Close()
+}
+
+func (cfg *userWebSocketService) writeMessageToAllConnections(
+	connections map[int]net.Conn,
+	op ws.OpCode, receivedMessage []byte,
+	conn net.Conn,
+	userId string,
+) {
+	for _, epConn := range connections {
+		if epConn == nil {
+			break
+		}
+
+		err := wsutil.WriteServerMessage(epConn, op, receivedMessage)
+		if err != nil {
+			cfg.removeConn(conn, userId)
+			epConn.Close()
+			continue
+		}
+
+	}
 }
 
 func (cfg *userWebSocketService) SimpleSocket(ctx context.Context) (bool, error) {
@@ -136,20 +151,7 @@ func (cfg *userWebSocketService) WriteToAllClients(ctx context.Context) (bool, e
 			}
 
 			connections := cfg.Epoll.Connections
-
-			for _, epConn := range connections {
-				if epConn == nil {
-					break
-				}
-
-				err = wsutil.WriteServerMessage(epConn, op, receivedMessage)
-				if err != nil {
-					cfg.removeConn(conn, userId)
-					epConn.Close()
-					continue
-				}
-
-			}
+			cfg.writeMessageToAllConnections(connections, op, receivedMessage, conn, userId)
 
 			break
 		}
@@ -181,20 +183,7 @@ func (cfg *userWebSocketService) WriteToAnUser(ctx context.Context) (bool, error
 			}
 
 			connections := cfg.Epoll.UserConnections.UserConn[userId]
-
-			for _, epConn := range connections {
-				if epConn == nil {
-					break
-				}
-
-				err = wsutil.WriteServerMessage(epConn, op, receivedMessage)
-				if err != nil {
-					cfg.removeConn(conn, userId)
-					epConn.Close()
-					continue
-				}
-
-			}
+			cfg.writeMessageToAllConnections(connections, op, receivedMessage, conn, userId)
 
 			break
 		}
