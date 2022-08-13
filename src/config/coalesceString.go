@@ -1,4 +1,4 @@
-package utils
+package config
 
 func CoalesceString(args ...*string) *string {
 	for _, arg := range args {

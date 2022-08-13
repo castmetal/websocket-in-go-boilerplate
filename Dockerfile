@@ -12,4 +12,4 @@ RUN go build .
 
 EXPOSE 8000
 
-CMD ["./websocket-in-go-boilerplate server.go"] --v
+CMD ["./websocket-in-go-boilerplate"] --v

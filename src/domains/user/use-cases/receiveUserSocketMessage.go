@@ -9,30 +9,47 @@ import (
 	_interfaces "websocket-in-go-boilerplate/src/domains/common"
 )
 
+type (
+	UserWebSocketService interface {
+		Execute()
+	}
+	receiveUserSocketMessage struct {
+		Message io.Reader
+		UserId  string
+	}
+)
+
 type ReceiveUserSocketMessage struct {
 	Message io.Reader
 	UserId  string
 }
 
-func NewReceiveUserSocketMessage(message []byte, userId string) (_interfaces.UseCase, error) {
-	if _errors.IsNullOrEmptyByte(message) {
-		return nil, _errors.InvalidMessageError(string(message))
+func NewReceiveUserSocketMessage(message *io.Reader, userId string) (_interfaces.IUseCase, error) {
+	messageBuffer := &bytes.Buffer{}
+	messageBuffer.ReadFrom(*message)
+
+	if _errors.IsNullOrEmptyByte(messageBuffer.Bytes()) {
+		return nil, _errors.InvalidMessageError(string(messageBuffer.Bytes()))
 	}
 
 	if _errors.IsNullOrEmpty(userId) {
-		return nil, _errors.InvalidUserIdError(string(message))
+		return nil, _errors.InvalidUserIdError(userId)
 	}
 
-	var uc _interfaces.UseCase = &ReceiveUserSocketMessage{
-		Message: bytes.NewReader(message),
+	// TODO - validate your JSON params here
+
+	var uc _interfaces.IUseCase = &receiveUserSocketMessage{
+		Message: bytes.NewReader(messageBuffer.Bytes()),
 		UserId:  userId,
 	}
+
+	defer func() { message = nil }()
 
 	return uc, nil
 }
 
 // Put here your code to read from a queue or other async message like SQS, RabbitMQ, Kafka or connect this in your cluster API
-func (msg *ReceiveUserSocketMessage) Execute() ([]byte, error) {
+func (msg *receiveUserSocketMessage) Execute() ([]byte, error) {
 	buf := &bytes.Buffer{}
 	buf.ReadFrom(msg.Message)
 

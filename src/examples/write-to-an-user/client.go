@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	_utils "websocket-in-go-boilerplate/src/utils"
+	_config "websocket-in-go-boilerplate/src/config"
 
 	"github.com/gorilla/websocket"
 )
@@ -14,14 +14,14 @@ var done chan interface{}
 var interrupt chan os.Signal
 
 func main() {
-	socketUrl := "ws://localhost:8000" + "/ws/writeToAnUser"
+	socketUrl := "ws://localhost:" + _config.SystemParams.PORT + "/v1/ws/writeToAnUser"
 
 	userArgId := os.Args[1]
 	if userArgId == "" {
 		userArgId = "1"
 	}
 
-	conn, _, err := websocket.DefaultDialer.Dial(socketUrl, http.Header{_utils.SystemParams.AUTH_HEADER: []string{userArgId}})
+	conn, _, err := websocket.DefaultDialer.Dial(socketUrl, http.Header{_config.SystemParams.AUTH_HEADER: []string{userArgId}})
 	if err != nil {
 		log.Fatal("Error connecting to Websocket Server:", err)
 	}

@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"time"
 
-	_utils "websocket-in-go-boilerplate/src/utils"
+	_config "websocket-in-go-boilerplate/src/config"
 
 	"github.com/gorilla/websocket"
 )
@@ -33,14 +33,14 @@ func main() {
 
 	signal.Notify(interrupt, os.Interrupt) // Notify the interrupt channel for SIGINT
 
-	socketUrl := "ws://localhost:8000" + "/ws"
+	socketUrl := "ws://localhost:" + _config.SystemParams.PORT + "/v1/ws"
 
 	userArgId := os.Args[1]
 	if userArgId == "" {
 		userArgId = "1"
 	}
 
-	conn, _, err := websocket.DefaultDialer.Dial(socketUrl, http.Header{_utils.SystemParams.AUTH_HEADER: []string{userArgId}})
+	conn, _, err := websocket.DefaultDialer.Dial(socketUrl, http.Header{_config.SystemParams.AUTH_HEADER: []string{userArgId}})
 	if err != nil {
 		log.Fatal("Error connecting to Websocket Server:", err)
 	}

@@ -1,4 +1,4 @@
-package epool
+package epoll
 
 import (
 	"log"

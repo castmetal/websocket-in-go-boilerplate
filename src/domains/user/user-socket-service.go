@@ -1,18 +1,39 @@
 package user
 
 import (
+	"bytes"
+	"context"
+	"io"
 	"log"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
 
+	_config "websocket-in-go-boilerplate/src/config"
+	_errors "websocket-in-go-boilerplate/src/domains/common"
 	_use_cases "websocket-in-go-boilerplate/src/domains/user/use-cases"
-	_epoll "websocket-in-go-boilerplate/src/epoll"
-	_utils "websocket-in-go-boilerplate/src/utils"
+	_epoll "websocket-in-go-boilerplate/src/infra/epoll"
 
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
 )
+
+type (
+	UserWebSocketService interface {
+		SimpleSocket(ctx context.Context) (bool, error)
+		WriteToAllClients(ctx context.Context) (bool, error)
+		WriteToAnUser(ctx context.Context) (bool, error)
+	}
+	userWebSocketService struct {
+		Response http.ResponseWriter
+		Request  *http.Request
+		Epoll    *_epoll.Epoll
+	}
+)
+
+func NewUserSocketService(res http.ResponseWriter, r *http.Request, epoll *_epoll.Epoll) UserWebSocketService {
+	return &userWebSocketService{Response: res, Request: r, Epoll: epoll}
+}
 
 type UserSocketController struct {
 	Response http.ResponseWriter
@@ -20,7 +41,7 @@ type UserSocketController struct {
 	Epoll    *_epoll.Epoll
 }
 
-func (cfg *UserSocketController) removeConn(conn net.Conn, userId string) {
+func (cfg *userWebSocketService) removeConn(conn net.Conn, userId string) {
 	if err := cfg.Epoll.Remove(conn, userId); err != nil {
 		log.Printf("Failed to remove %v", err)
 	}
@@ -28,22 +49,22 @@ func (cfg *UserSocketController) removeConn(conn net.Conn, userId string) {
 	conn.Close()
 }
 
-func (cfg *UserSocketController) SimpleSocket() {
+func (cfg *userWebSocketService) SimpleSocket(ctx context.Context) (bool, error) {
 	// Upgrade connection
-	userId := cfg.Request.Header.Get(_utils.SystemParams.AUTH_HEADER)
+	userId := cfg.Request.Header.Get(_config.SystemParams.AUTH_HEADER)
 
 	// TODO - for more security rules, use a middleware before and validates the auth_header with JWT, Oauth or you service provider
 
 	conn, _, _, err := ws.UpgradeHTTP(cfg.Request, cfg.Response)
 	if err != nil {
-		return
+		return false, _errors.InvalidConnectionError()
 	}
 
 	if err := cfg.Epoll.Add(conn, userId); err != nil {
 		log.Printf("Failed to add connection %v", err)
 		conn.Close()
 
-		return
+		return false, _errors.InvalidConnectionError()
 	}
 
 	go func() {
@@ -66,8 +87,9 @@ func (cfg *UserSocketController) SimpleSocket() {
 				break
 			}
 
+			var msgBytes io.Reader = bytes.NewReader(msg)
 			useCase, err := _use_cases.NewReceiveUserSocketMessage(
-				msg,
+				&msgBytes,
 				userId,
 			)
 			if err != nil {
@@ -88,18 +110,20 @@ func (cfg *UserSocketController) SimpleSocket() {
 		}
 
 	}()
+
+	return true, nil
 }
 
-func (cfg *UserSocketController) WriteToAllClients() {
+func (cfg *userWebSocketService) WriteToAllClients(ctx context.Context) (bool, error) {
 	// Upgrade connection
-	userId := cfg.Request.Header.Get(_utils.SystemParams.AUTH_HEADER)
+	userId := cfg.Request.Header.Get(_config.SystemParams.AUTH_HEADER)
 
 	// TODO - for more security rules, use a middleware before and validates the auth_header with JWT, Oauth or you service provider
 
 	conn, _, _, err := ws.UpgradeHTTP(cfg.Request, cfg.Response)
 	if err != nil {
 		log.Fatal(err)
-		return
+		return false, _errors.InvalidConnectionError()
 	}
 
 	go func() {
@@ -131,18 +155,20 @@ func (cfg *UserSocketController) WriteToAllClients() {
 		}
 
 	}()
+
+	return true, nil
 }
 
-func (cfg *UserSocketController) WriteToAnUser() {
+func (cfg *userWebSocketService) WriteToAnUser(ctx context.Context) (bool, error) {
 	// Upgrade connection
-	userId := cfg.Request.Header.Get(_utils.SystemParams.AUTH_HEADER)
+	userId := cfg.Request.Header.Get(_config.SystemParams.AUTH_HEADER)
 
 	// TODO - for more security rules, use a middleware before and validates the auth_header with JWT, Oauth or you service provider
 
 	conn, _, _, err := ws.UpgradeHTTP(cfg.Request, cfg.Response)
 	if err != nil {
 		log.Fatal(err)
-		return
+		return false, _errors.InvalidConnectionError()
 	}
 
 	go func() {
@@ -174,4 +200,6 @@ func (cfg *UserSocketController) WriteToAnUser() {
 		}
 
 	}()
+
+	return true, nil
 }
