@@ -1,7 +1,9 @@
 package common
 
 import (
+	"log"
 	"net/http"
+	"runtime/debug"
 )
 
 type Middleware func(http.Handler) http.Handler
@@ -11,12 +13,26 @@ type MyMux struct {
 	middlewares []Middleware
 }
 
-func applyMiddlewares(handler http.Handler, middlewares ...Middleware) http.Handler {
-	for i := len(middlewares) - 1; i >= 0; i-- {
-		handler = middlewares[i](handler)
-	}
+func WithLogger(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("path:%s process start...\n", r.URL.Path)
+		defer func() {
+			log.Printf("path:%s process end...\n", r.URL.Path)
+		}()
+		handler.ServeHTTP(w, r)
+	})
+}
 
-	return handler
+func PanicRecover(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Println(string(debug.Stack()))
+			}
+		}()
+
+		handler.ServeHTTP(w, r)
+	})
 }
 
 func NewMyMux() *MyMux {
@@ -37,4 +53,12 @@ func (m *MyMux) Handle(pattern string, handler http.Handler) {
 func (m *MyMux) HandleFunc(pattern string, handler http.HandlerFunc) {
 	newHandler := applyMiddlewares(handler, m.middlewares...)
 	m.ServeMux.Handle(pattern, newHandler)
+}
+
+func applyMiddlewares(handler http.Handler, middlewares ...Middleware) http.Handler {
+	for i := len(middlewares) - 1; i >= 0; i-- {
+		handler = middlewares[i](handler)
+	}
+
+	return handler
 }
