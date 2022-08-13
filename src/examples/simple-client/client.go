@@ -52,7 +52,7 @@ func main() {
 	// We send our relevant packets here
 	for {
 		select {
-		case <-time.After(time.Duration(1) * time.Millisecond * 10000):
+		case <-time.After(time.Duration(1) * time.Millisecond * 500):
 			// Send an echo packet every second
 			err := conn.WriteMessage(websocket.TextMessage, []byte("Hello from GolangDocs"+userArgId+"!"))
 			if err != nil {
