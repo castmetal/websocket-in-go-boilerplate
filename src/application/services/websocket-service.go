@@ -18,10 +18,7 @@ import (
 
 type (
 	WebSocketService interface {
-		EstabilishConnection(ctx context.Context, userId string, conn net.Conn) (bool, error)
-		ExecuteUseCase(ctx context.Context, useCase _core.IUseCase, userId string, conn net.Conn) (bool, error)
-		WriteToAllClients(ctx context.Context, userId string, conn net.Conn) (bool, error)
-		WriteToAnUser(ctx context.Context, userId string, conn net.Conn) (bool, error)
+		_core.IWebsocket
 	}
 	WebSocketRequest struct {
 		WebSocketService
