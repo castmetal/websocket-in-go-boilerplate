@@ -15,7 +15,7 @@ import (
 
 	_config "websocket-in-go-boilerplate/src/config"
 	_rest_controllers "websocket-in-go-boilerplate/src/controllers"
-	_interfaces "websocket-in-go-boilerplate/src/domains/common"
+	_core "websocket-in-go-boilerplate/src/core"
 	_epoll "websocket-in-go-boilerplate/src/infra/epoll"
 )
 
@@ -30,12 +30,12 @@ func InitWebsocketServer() {
 	// Start epoll
 	makeEpoll()
 
-	middlewares := []_interfaces.Middleware{
-		_interfaces.PanicRecover,
-		_interfaces.WithLogger,
+	middlewares := []_core.Middleware{
+		_core.PanicRecover,
+		_core.WithLogger,
 	}
 
-	mux := _interfaces.NewMyMux()
+	mux := _core.NewMyMux()
 
 	mux.Use(middlewares...)
 

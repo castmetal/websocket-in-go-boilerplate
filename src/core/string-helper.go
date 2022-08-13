@@ -1,4 +1,4 @@
-package common
+package core
 
 func IsNullOrEmpty(value string) bool {
 	return len(value) <= 0

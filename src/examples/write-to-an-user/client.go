@@ -28,7 +28,8 @@ func main() {
 
 	defer conn.Close()
 
-	err = conn.WriteMessage(websocket.TextMessage, []byte("Hello from GolangDocs To An User "+userArgId+"!"))
+	jsonWriter := `{"message":"MyMessage","toUser":"` + userArgId + `"}`
+	err = conn.WriteMessage(websocket.TextMessage, []byte(jsonWriter))
 	if err != nil {
 		log.Println("Error during writing to websocket:", err)
 		return

@@ -15,12 +15,13 @@ import (
 var done chan interface{}
 var interrupt chan os.Signal
 
-func receiveHandler(connection *websocket.Conn) {
+func receiveHandler(connection *websocket.Conn, breakConn chan error) {
 	defer close(done)
 	for {
 		_, msg, err := connection.ReadMessage()
 		if err != nil {
 			log.Println("Error in receive:", err)
+			breakConn <- err
 			return
 		}
 		log.Printf("Received: %s\n", msg)
@@ -33,7 +34,7 @@ func main() {
 
 	signal.Notify(interrupt, os.Interrupt) // Notify the interrupt channel for SIGINT
 
-	socketUrl := "ws://localhost:" + _config.SystemParams.PORT + "/v1/ws"
+	socketUrl := "ws://localhost:" + _config.SystemParams.PORT + "/v1/ws/createUser"
 
 	userArgId := os.Args[1]
 	if userArgId == "" {
@@ -46,20 +47,24 @@ func main() {
 	}
 
 	defer conn.Close()
-	go receiveHandler(conn)
 
-	// Our main loop for the client
-	// We send our relevant packets here
+	breakConn := make(chan error)
+	go receiveHandler(conn, breakConn)
+
+	jsonMessage := `{"first_name":"Castmetal","last_name":"Metal","user_name":"castmetal","email":"email@gmail.com","password":"password"}`
+	// Send an echo packet every second
+	err = conn.WriteMessage(websocket.TextMessage, []byte(jsonMessage))
+	if err != nil {
+		log.Println("Error during writing to websocket:", err)
+		return
+	}
+
+	time.Sleep(time.Second * 1)
+
+	conn.Close()
+
 	for {
 		select {
-		case <-time.After(time.Duration(1) * time.Millisecond * 500):
-			// Send an echo packet every second
-			err := conn.WriteMessage(websocket.TextMessage, []byte("Hello from GolangDocs"+userArgId+"!"))
-			if err != nil {
-				log.Println("Error during writing to websocket:", err)
-				return
-			}
-
 		case <-interrupt:
 			// We received a SIGINT (Ctrl + C). Terminate gracefully...
 			log.Println("Received SIGINT interrupt signal. Closing all pending connections")
@@ -79,6 +84,9 @@ func main() {
 			}
 			return
 
+		case <-breakConn:
+			log.Println("Connection Closed")
+			return
 		}
 	}
 }

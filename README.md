@@ -13,14 +13,11 @@
 - Publish messages on server and receive a result of your use case and business rules back with a simple full-duplex message at TCP connections
 - Send messages with a default `AUTH_HEADER` environment and receive again a result for this publish
 
-
 ## Case 2: Publish to All Clients
 
 ![how it Works](https://raw.githubusercontent.com/castmetal/websocket-in-go-boilerplate/main/WebsocketFlow2.png)
 
 - Publish a message to all TCP active connections. This example is common when you need to send to all clients a state or a new notify message about a new content and you need update your app with this
-
-
 
 ## Case 3: Publish to A Specific User
 
@@ -45,17 +42,30 @@
 - Run:
 
 ```sh
-    go run ./examples/simple-client/client.go YourUserId
+    go run ./examples/execute-use-case/client.go YourUserId
 ```
 
 ### Client 2
+
+- Estabilish a Single Connection:
+
+```sh
+    go run ./examples/connect/client.go YourUserId
+```
 
 - Run:
 
 ```sh
     go run ./examples/write-to-all-clients/client.go YourUserId
 ```
+
 ### Client 3
+
+- Estabilish a Single Connection:
+
+```sh
+    go run ./examples/connect/client.go YourUserId
+```
 
 - Run:
 
