@@ -2,13 +2,14 @@ package common
 
 import (
 	"context"
+	"net"
 	"net/http"
 )
 
 type IWebsocket interface {
-	SimpleSocket(ctx context.Context) (bool, error)
-	WriteToAllClients(ctx context.Context) (bool, error)
-	WriteToAnUser(ctx context.Context) (bool, error)
+	SimpleSocket(ctx context.Context, userId string, conn net.Conn) (bool, error)
+	WriteToAllClients(ctx context.Context, userId string, conn net.Conn) (bool, error)
+	WriteToAnUser(ctx context.Context, userId string, conn net.Conn) (bool, error)
 }
 
 type IUseCase interface {

@@ -6,10 +6,8 @@ import (
 	"io"
 	"log"
 	"net"
-	"net/http"
 	_ "net/http/pprof"
 
-	_config "websocket-in-go-boilerplate/src/config"
 	_errors "websocket-in-go-boilerplate/src/domains/common"
 	_use_cases "websocket-in-go-boilerplate/src/domains/user/use-cases"
 	_epoll "websocket-in-go-boilerplate/src/infra/epoll"
@@ -20,32 +18,20 @@ import (
 
 type (
 	UserWebSocketService interface {
-		SimpleSocket(ctx context.Context) (bool, error)
-		WriteToAllClients(ctx context.Context) (bool, error)
-		WriteToAnUser(ctx context.Context) (bool, error)
+		SimpleSocket(ctx context.Context, userId string, conn net.Conn) (bool, error)
+		WriteToAllClients(ctx context.Context, userId string, conn net.Conn) (bool, error)
+		WriteToAnUser(ctx context.Context, userId string, conn net.Conn) (bool, error)
 	}
 	userWebSocketService struct {
-		Response http.ResponseWriter
-		Request  *http.Request
-		Epoll    *_epoll.Epoll
+		Epoll *_epoll.Epoll
 	}
 )
 
-func NewUserSocketService(res http.ResponseWriter, r *http.Request, epoll *_epoll.Epoll) UserWebSocketService {
-	return &userWebSocketService{Response: res, Request: r, Epoll: epoll}
+func NewUserSocketService(epoll *_epoll.Epoll) UserWebSocketService {
+	return &userWebSocketService{Epoll: epoll}
 }
 
-func (cfg *userWebSocketService) SimpleSocket(ctx context.Context) (bool, error) {
-	// Upgrade connection
-	userId := cfg.Request.Header.Get(_config.SystemParams.AUTH_HEADER)
-
-	// TODO - for more security rules, use a middleware before and validates the auth_header with JWT, Oauth or you service provider
-
-	conn, _, _, err := ws.UpgradeHTTP(cfg.Request, cfg.Response)
-	if err != nil {
-		return false, _errors.InvalidConnectionError()
-	}
-
+func (cfg *userWebSocketService) SimpleSocket(ctx context.Context, userId string, conn net.Conn) (bool, error) {
 	if err := cfg.Epoll.Add(conn, userId); err != nil {
 		log.Printf("Failed to add connection %v", err)
 		conn.Close()
@@ -100,18 +86,7 @@ func (cfg *userWebSocketService) SimpleSocket(ctx context.Context) (bool, error)
 	return true, nil
 }
 
-func (cfg *userWebSocketService) WriteToAllClients(ctx context.Context) (bool, error) {
-	// Upgrade connection
-	userId := cfg.Request.Header.Get(_config.SystemParams.AUTH_HEADER)
-
-	// TODO - for more security rules, use a middleware before and validates the auth_header with JWT, Oauth or you service provider
-
-	conn, _, _, err := ws.UpgradeHTTP(cfg.Request, cfg.Response)
-	if err != nil {
-		log.Fatal(err)
-		return false, _errors.InvalidConnectionError()
-	}
-
+func (cfg *userWebSocketService) WriteToAllClients(ctx context.Context, userId string, conn net.Conn) (bool, error) {
 	go func() {
 		defer conn.Close()
 
@@ -132,18 +107,7 @@ func (cfg *userWebSocketService) WriteToAllClients(ctx context.Context) (bool, e
 	return true, nil
 }
 
-func (cfg *userWebSocketService) WriteToAnUser(ctx context.Context) (bool, error) {
-	// Upgrade connection
-	userId := cfg.Request.Header.Get(_config.SystemParams.AUTH_HEADER)
-
-	// TODO - for more security rules, use a middleware before and validates the auth_header with JWT, Oauth or you service provider
-
-	conn, _, _, err := ws.UpgradeHTTP(cfg.Request, cfg.Response)
-	if err != nil {
-		log.Fatal(err)
-		return false, _errors.InvalidConnectionError()
-	}
-
+func (cfg *userWebSocketService) WriteToAnUser(ctx context.Context, userId string, conn net.Conn) (bool, error) {
 	go func() {
 		defer conn.Close()
 
