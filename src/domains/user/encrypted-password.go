@@ -2,16 +2,18 @@ package user
 
 import (
 	"crypto/sha256"
+	"fmt"
 	"math/rand"
 	"time"
+	_config "websocket-in-go-boilerplate/src/config"
 	_core "websocket-in-go-boilerplate/src/core"
 )
 
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+var charset = _config.SystemParams.SALT_CHARSET
 
 type EncryptedPassword struct {
-	PasswordHash [32]byte `json:"password_hash"`
-	PasswordSalt [32]byte `json:"password_salt"`
+	PasswordHash string `json:"password_hash"`
+	PasswordSalt string `json:"password_salt"`
 }
 
 func NewEncryptedPassword(password string) *EncryptedPassword {
@@ -35,7 +37,7 @@ func NewEncryptedPassword(password string) *EncryptedPassword {
 
 	passwordHash = sha256.Sum256(passwordAsByte)
 
-	return &EncryptedPassword{PasswordSalt: passwordSalt, PasswordHash: passwordHash}
+	return &EncryptedPassword{PasswordSalt: fmt.Sprintf("%x", passwordSalt), PasswordHash: fmt.Sprintf("%x", passwordHash)}
 }
 
 func (ep *EncryptedPassword) VerifyPassword(password string) bool {
