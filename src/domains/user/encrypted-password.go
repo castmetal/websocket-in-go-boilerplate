@@ -12,8 +12,8 @@ import (
 var charset = _config.SystemParams.SALT_CHARSET
 
 type EncryptedPassword struct {
-	PasswordHash string `json:"password_hash"`
-	PasswordSalt string `json:"password_salt"`
+	PasswordHash string `json:"password_hash" gorm:"index"`
+	PasswordSalt string `json:"password_salt" gorm:"index"`
 }
 
 func NewEncryptedPassword(password string) *EncryptedPassword {

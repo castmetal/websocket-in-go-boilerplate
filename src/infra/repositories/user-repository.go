@@ -2,26 +2,32 @@ package repositories
 
 import (
 	"context"
+	"log"
 
-	_core "websocket-in-go-boilerplate/src/core"
 	_user "websocket-in-go-boilerplate/src/domains/user"
+	_infra_db "websocket-in-go-boilerplate/src/infra/db"
+
+	"gorm.io/gorm"
 )
 
 const _collectionName = "Users"
 
 type userRepository struct {
-	db *_core.IDatabase
+	db *gorm.DB
 }
 
 func NewUserRepositoryFromConfig() _user.IUserRepository {
-	var db _core.IDatabase
+	db, err := _infra_db.NewDatabaseConnection()
+	if err != nil {
+		log.Fatalf("Error on Database Connection: %v", err)
+	}
 
 	// TO DO - Get database connection from config
 
-	return newUserRepository(&db)
+	return newUserRepository(db)
 }
 
-func newUserRepository(db *_core.IDatabase) _user.IUserRepository {
+func newUserRepository(db *gorm.DB) _user.IUserRepository {
 	return &userRepository{db: db}
 }
 

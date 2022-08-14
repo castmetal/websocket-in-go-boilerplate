@@ -5,6 +5,9 @@ import (
 	"io"
 	"net"
 	"net/http"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type IWebsocket interface {
@@ -28,12 +31,13 @@ type IError interface {
 }
 
 type EntityBase struct {
-	Id string `json:"id" ,bson:"_id"`
+	gorm.Model
+	Id uuid.UUID `json:"id" bson:"_id" gorm:"primaryKey;type:uuid;default:uuid_generate_v4();collumn:id"`
 }
 
 type IEntity interface {
-	SetId(id string) *EntityBase
-	GetId(entity *EntityBase) string
+	SetId(id uuid.UUID) *EntityBase
+	GetId(entity *EntityBase) uuid.UUID
 	GetEntity() *EntityBase
 }
 

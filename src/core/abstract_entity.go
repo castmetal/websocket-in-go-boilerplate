@@ -4,13 +4,15 @@ import (
 	"github.com/google/uuid"
 )
 
-func NewAbstractEntity(id string) *EntityBase {
-	var _id string
+func NewAbstractEntity(id uuid.UUID) *EntityBase {
+	var _id uuid.UUID
 
-	if id != "" {
+	idString := string(id[:])
+
+	if idString != "" {
 		_id = id
 	} else {
-		_id = uuid.New().String()
+		_id = uuid.New()
 	}
 
 	var entity = &EntityBase{
