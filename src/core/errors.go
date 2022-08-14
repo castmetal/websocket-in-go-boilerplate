@@ -13,6 +13,8 @@ const (
 	invalidConnectionText string = PREFIX + "Invalid Connection!"
 	connectionClosedText  string = PREFIX + "Connection Closed!"
 	onlySameMethodText    string = "Method not allowed"
+	notFoundText          string = "%s not found"
+	alreadyExistsText     string = "%s already exists"
 )
 
 func IsNullOrEmptyError(name string) error {
@@ -37,4 +39,12 @@ func ConnectionClosedError() error {
 
 func OnlySameMethodError() error {
 	return errors.New(onlySameMethodText)
+}
+
+func NotFoundError(name string) error {
+	return errors.New(fmt.Sprintf(notFoundText, name))
+}
+
+func AlreadyExistsError(name string) error {
+	return errors.New(fmt.Sprintf(alreadyExistsText, name))
 }

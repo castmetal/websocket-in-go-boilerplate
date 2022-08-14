@@ -104,8 +104,9 @@ func (cfg *WebSocketRequest) ExecuteUseCase(ctx context.Context, useCase _core.I
 			}
 
 			var msgBytes io.Reader = bytes.NewReader(msg)
-			writeMessage, err := useCase.Execute(msgBytes)
+			writeMessage, err := useCase.Execute(ctx, msgBytes)
 			if err != nil {
+				_ = wsutil.WriteServerMessage(conn, op, []byte(strconv.FormatBool(writeMessage)))
 				log.Printf("Failed to execute use case: %v", err)
 				e <- err
 				break

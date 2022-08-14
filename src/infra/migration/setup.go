@@ -20,6 +20,7 @@ func runMigrations() {
 
 	fmt.Println("Migrating database ...")
 
+	db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`)
 	db.AutoMigrate(&_user.User{})
 
 	fmt.Println("Migration completed ...")

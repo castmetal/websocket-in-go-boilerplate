@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type IWebsocket interface {
@@ -23,7 +22,7 @@ type IDTO interface {
 }
 
 type IUseCase interface {
-	Execute(message io.Reader) (bool, error)
+	Execute(ctx context.Context, message io.Reader) (bool, error)
 }
 
 type IError interface {
@@ -31,8 +30,7 @@ type IError interface {
 }
 
 type EntityBase struct {
-	gorm.Model
-	Id uuid.UUID `json:"id" bson:"_id" gorm:"primaryKey;type:uuid;default:uuid_generate_v4();collumn:id"`
+	Id uuid.UUID `json:"id" bson:"_id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
 }
 
 type IEntity interface {

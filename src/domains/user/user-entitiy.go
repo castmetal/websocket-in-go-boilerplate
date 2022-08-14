@@ -12,7 +12,8 @@ import (
 
 type User struct {
 	gorm.Model
-	_core.EntityBase
+	_core.EntityBase  `gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
+	Id                uuid.UUID          `json:"id" bson:"_id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
 	FirstName         string             `json:"first_name" gorm:"type:varchar(60);column:first_name"`
 	LastName          string             `json:"last_name" gorm:"type:varchar(140);column:last_name"`
 	UserName          string             `json:"user_name" gorm:"type:varchar(90);unique;uniqueIndex;collumn:user_name"`
@@ -27,10 +28,22 @@ func (User) TableName() string {
 	return "users"
 }
 
+func (u *User) BeforeCreate(tx *gorm.DB) error {
+	id := uuid.New()
+
+	u.Id = id
+
+	return nil
+}
+
 func NewUserEntity(dto _dtos.UserDTO) (*User, error) {
 	var user *User
+	var uuidFromId uuid.UUID
 
-	uuidFromId := uuid.Must(uuid.FromBytes([]byte(dto.Id)))
+	if dto.Id != "" {
+		uuidFromId = uuid.Must(uuid.FromBytes([]byte(dto.Id)))
+	}
+
 	abstractEntity := _core.NewAbstractEntity(uuidFromId)
 
 	if _core.IsNullOrEmpty(dto.UserName) {

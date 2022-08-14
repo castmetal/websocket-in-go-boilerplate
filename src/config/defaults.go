@@ -11,7 +11,7 @@ const (
 	DB_USER          = "myusername"
 	DB_PASSWORD      = "mypassword"
 	DB_TIME_ZONE     = "America/Sao_Paulo"
-	DB_DATABASE_NAME = "public"
+	DB_DATABASE_NAME = "novo"
 )
 
 type Config struct {

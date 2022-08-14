@@ -1,8 +1,7 @@
 package use_cases
 
 import (
-	"encoding/json"
-	"fmt"
+	"context"
 	"io"
 
 	_dtos "websocket-in-go-boilerplate/src/application/dtos"
@@ -31,7 +30,7 @@ func NewCreateUser(repository _user.IUserRepository, dto *_dtos.CreateUserDTO) (
 }
 
 // Put here your validation message and return your struct mapper to service
-func (uc *CreateUserRequest) Execute(message io.Reader) (bool, error) {
+func (uc *CreateUserRequest) Execute(ctx context.Context, message io.Reader) (bool, error) {
 	dto, err := uc.DTO.Validate(message)
 	if err != nil {
 		return false, err
@@ -44,16 +43,11 @@ func (uc *CreateUserRequest) Execute(message io.Reader) (bool, error) {
 		return false, err
 	}
 
-	binaryUser, err := json.Marshal(user)
+	_, err = uc.Repository.Create(ctx, user)
 	if err != nil {
 		return false, err
 	}
 
-	fmt.Println(string(binaryUser))
-
-	// Create your user with repository here
-
-	// Convert to Json and Send your Structured Json
 	return true, nil
 }
 

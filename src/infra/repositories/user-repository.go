@@ -2,8 +2,10 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 	"log"
 
+	_core "websocket-in-go-boilerplate/src/core"
 	_user "websocket-in-go-boilerplate/src/domains/user"
 	_infra_db "websocket-in-go-boilerplate/src/infra/db"
 
@@ -22,8 +24,6 @@ func NewUserRepositoryFromConfig() _user.IUserRepository {
 		log.Fatalf("Error on Database Connection: %v", err)
 	}
 
-	// TO DO - Get database connection from config
-
 	return newUserRepository(db)
 }
 
@@ -34,17 +34,41 @@ func newUserRepository(db *gorm.DB) _user.IUserRepository {
 func (repository userRepository) FindOneById(ctx context.Context, id string) (*_user.User, error) {
 	var user *_user.User
 
-	// your implementation here
+	repository.db.First(&user, "id = ?", id)
+	userId := string(user.Id[:])
+
+	if userId == "" {
+		return nil, _core.NotFoundError("User")
+	}
 
 	return user, nil
 }
 
 func (repository userRepository) Create(ctx context.Context, user *_user.User) (*_user.User, error) {
-	var u *_user.User = user
+	var u *_user.User
 
-	// your implementation here
+	repository.db.First(&u, "email = ?", user.Email)
+	fmt.Println(u.Email)
+	if u.Email != "" {
+		return nil, _core.AlreadyExistsError("User")
+	}
 
-	// TO DO - Domain events
+	result := repository.db.Create(user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
 
-	return u, nil
+	return user, nil
+}
+
+func (repository userRepository) FindOneByEmail(ctx context.Context, email string) (*_user.User, error) {
+	var user *_user.User
+
+	repository.db.First(&user, "email = ?", email)
+	userId := string(user.Id[:])
+	if userId == "" {
+		return nil, _core.NotFoundError("User")
+	}
+
+	return user, nil
 }
