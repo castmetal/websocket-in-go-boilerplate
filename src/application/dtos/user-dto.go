@@ -10,35 +10,42 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type UserDTO struct {
-	_core.IDTO
-	Id        string `json:"id"`
-	FirstName string `json:"first_name" validate:"required,min=2"`
-	LastName  string `json:"last_name" validate:"required,min=2"`
-	UserName  string `json:"user_name" validate:"required,min=2"`
-	Email     string `json:"email" validate:"required,email"`
-	Password  string `json:"password" validate:"required,min=8"`
-}
+type (
+	IUserDTO interface {
+		_core.IDTO
+		Validate(message io.Reader) (IUserDTO, error)
+		ToBytes() ([]byte, error)
+	}
 
-func (dto *UserDTO) Validate(message io.Reader) (*UserDTO, error) {
+	UserDTO struct {
+		Id        string `json:"id"`
+		FirstName string `json:"first_name" validate:"required,min=2"`
+		LastName  string `json:"last_name" validate:"required,min=2"`
+		UserName  string `json:"user_name" validate:"required,min=2"`
+		Email     string `json:"email" validate:"required,email"`
+		Password  string `json:"password" validate:"required,min=8"`
+	}
+)
+
+func (dto *UserDTO) Validate(message io.Reader) (IUserDTO, error) {
 	var validate *validator.Validate
-	DTO := UserDTO{}
+	var IDTO IUserDTO = &UserDTO{}
 
 	messageBuffer := &bytes.Buffer{}
 	messageBuffer.ReadFrom(message)
 
-	err := json.Unmarshal(messageBuffer.Bytes(), &DTO)
+	err := json.Unmarshal(messageBuffer.Bytes(), &IDTO)
 	if err != nil {
-		return &DTO, err
+		return IDTO, err
 	}
 
 	validate = validator.New()
-	err = validate.Struct(DTO)
+	err = validate.Struct(IDTO)
 	if err != nil {
-		return &DTO, err
+		return IDTO, err
 	}
 
-	return &DTO, nil
+	return IDTO, nil
 }
 
 func (dto *UserDTO) ToBytes() ([]byte, error) {

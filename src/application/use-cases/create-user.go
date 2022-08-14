@@ -1,7 +1,9 @@
 package use_cases
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 
 	_dtos "websocket-in-go-boilerplate/src/application/dtos"
@@ -16,11 +18,11 @@ type (
 	CreateUserRequest struct {
 		CreateUser
 		Repository _user.IUserRepository
-		DTO        *_dtos.CreateUserDTO
+		DTO        _dtos.ICreateUserDTO
 	}
 )
 
-func NewCreateUser(repository _user.IUserRepository, dto *_dtos.CreateUserDTO) (_core.IUseCase, error) {
+func NewCreateUser(repository _user.IUserRepository, dto _dtos.ICreateUserDTO) (_core.IUseCase, error) {
 	var uc _core.IUseCase = &CreateUserRequest{
 		Repository: repository,
 		DTO:        dto,
@@ -36,7 +38,14 @@ func (uc *CreateUserRequest) Execute(ctx context.Context, message io.Reader) (bo
 		return false, err
 	}
 
-	var userDto = getUserDTO(dto)
+	dtoBytes, err := dto.ToBytes()
+	if err != nil {
+		return false, err
+	}
+
+	var dtoReader io.Reader = bytes.NewReader(dtoBytes)
+
+	var userDto = getUserDTO(dtoReader)
 
 	user, err := _user.NewUserEntity(userDto)
 	if err != nil {
@@ -51,13 +60,14 @@ func (uc *CreateUserRequest) Execute(ctx context.Context, message io.Reader) (bo
 	return true, nil
 }
 
-func getUserDTO(createUserDTO *_dtos.CreateUserDTO) _dtos.UserDTO {
-	return _dtos.UserDTO{
-		Id:        createUserDTO.Id,
-		FirstName: createUserDTO.FirstName,
-		LastName:  createUserDTO.LastName,
-		UserName:  createUserDTO.UserName,
-		Email:     createUserDTO.Email,
-		Password:  createUserDTO.Password,
+func getUserDTO(message io.Reader) _dtos.UserDTO {
+	var userDTO _dtos.UserDTO
+	messageBuffer := &bytes.Buffer{}
+	messageBuffer.ReadFrom(message)
+
+	if err := json.Unmarshal(messageBuffer.Bytes(), &userDTO); err != nil {
+		panic(err)
 	}
+
+	return userDTO
 }

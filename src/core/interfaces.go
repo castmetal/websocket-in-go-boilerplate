@@ -17,8 +17,6 @@ type IWebsocket interface {
 }
 
 type IDTO interface {
-	Validate(message io.Reader) (IDTO, error)
-	ToBytes() ([]byte, error)
 }
 
 type IUseCase interface {

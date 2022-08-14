@@ -5,32 +5,43 @@ import (
 	"encoding/json"
 	"io"
 
+	_core "websocket-in-go-boilerplate/src/core"
+
 	"github.com/go-playground/validator/v10"
 )
 
-type CreateUserDTO struct {
-	UserDTO
-}
+type (
+	ICreateUserDTO interface {
+		_core.IDTO
+		Validate(message io.Reader) (ICreateUserDTO, error)
+		ToBytes() ([]byte, error)
+	}
 
-func (dto *CreateUserDTO) Validate(message io.Reader) (*CreateUserDTO, error) {
+	CreateUserDTO struct {
+		ICreateUserDTO
+		UserDTO
+	}
+)
+
+func (dto *CreateUserDTO) Validate(message io.Reader) (ICreateUserDTO, error) {
 	var validate *validator.Validate
-	DTO := CreateUserDTO{}
+	var IDTO ICreateUserDTO = &CreateUserDTO{}
 
 	messageBuffer := &bytes.Buffer{}
 	messageBuffer.ReadFrom(message)
 
-	err := json.Unmarshal(messageBuffer.Bytes(), &DTO)
+	err := json.Unmarshal(messageBuffer.Bytes(), &IDTO)
 	if err != nil {
-		return &DTO, err
+		return IDTO, err
 	}
 
 	validate = validator.New()
-	err = validate.Struct(DTO)
+	err = validate.Struct(IDTO)
 	if err != nil {
-		return &DTO, err
+		return IDTO, err
 	}
 
-	return &DTO, nil
+	return IDTO, nil
 }
 
 func (dto *CreateUserDTO) ToBytes() ([]byte, error) {
