@@ -14,7 +14,7 @@ func GetEnvVariable(key string) string {
 	}
 
 	env := os.Getenv("ENV")
-	if env == "production" || env == "" {
+	if env == "production" {
 		return os.Getenv(key)
 	}
 
