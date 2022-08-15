@@ -18,6 +18,7 @@ type CreateUserTestStruct struct {
 var TestData = []CreateUserTestStruct{
 	{[]byte(`{"first_name":"Castmetal","last_name":"Metal","user_name":"castmetal","email":"email@gmail.com","password":"password"}`), true},
 	{[]byte(`{"first_name":"Castmetal","last_name":"Metal","user_name":"castmetal","email":"email@gmail.com","password":"password"}`), false},
+	{[]byte(`{"first_name":"Castmetal","last_name":"Metal","user_name":"castmetal","email":"wrongemail","password":"password"}`), false},
 }
 
 // Testing CreateUser Use Case
