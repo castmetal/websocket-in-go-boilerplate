@@ -1,58 +1,52 @@
-package repositories
+package in_memory_tests
 
 import (
 	"context"
-	"log"
 
 	_core "websocket-in-go-boilerplate/src/core"
 	_user "websocket-in-go-boilerplate/src/domains/user"
-	_infra_db "websocket-in-go-boilerplate/src/infra/db"
-
-	"gorm.io/gorm"
 )
 
-const _collectionName = "Users"
+const _collectionName = "UsersInMemory"
+
+var dbDataUser map[string]_user.User = make(map[string]_user.User)
 
 type userRepository struct {
-	db *gorm.DB
+	db _core.IDatabase
 }
 
 func NewUserRepositoryFromConfig() _user.IUserRepository {
-	db, err := _infra_db.NewDatabaseConnection()
-	if err != nil {
-		log.Fatalf("Error on Database Connection: %v", err)
-	}
+	var db _core.IDatabase
 
 	return newUserRepository(db)
 }
 
-func newUserRepository(db *gorm.DB) _user.IUserRepository {
+func newUserRepository(db _core.IDatabase) _user.IUserRepository {
 	return &userRepository{db: db}
 }
 
 func (repository userRepository) FindOneById(ctx context.Context, id string) (*_user.User, error) {
-	var user *_user.User
+	var user _user.User = dbDataUser[id]
 
-	repository.db.First(&user, "id = ?", id)
-	if user == nil {
+	userId := string(user.Id[:])
+
+	if userId == "" {
 		return nil, _core.NotFoundError("User")
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 func (repository userRepository) Create(ctx context.Context, user *_user.User) (*_user.User, error) {
 	var u *_user.User
 
-	repository.db.First(&u, "email = ?", user.Email)
-	if u == nil {
-		return nil, _core.NotFoundError("User")
+	u, _ = repository.FindOneByEmail(ctx, user.Email)
+	if u != nil {
+		return nil, _core.AlreadyExistsError("User")
 	}
 
-	result := repository.db.Create(user)
-	if result.Error != nil {
-		return nil, result.Error
-	}
+	userId := string(user.Id[:])
+	dbDataUser[userId] = *user
 
 	return user, nil
 }
@@ -60,7 +54,12 @@ func (repository userRepository) Create(ctx context.Context, user *_user.User) (
 func (repository userRepository) FindOneByEmail(ctx context.Context, email string) (*_user.User, error) {
 	var user *_user.User
 
-	repository.db.First(&user, "email = ?", email)
+	for _, u := range dbDataUser {
+		if u.Email == email {
+			user = &u
+		}
+	}
+
 	if user == nil {
 		return nil, _core.NotFoundError("User")
 	}
