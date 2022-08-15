@@ -31,13 +31,27 @@
 
 ### Running at local environment
 
+#### Change Your .env.example and copy to another file named .env
+
+- Install Postgresql and create your database with the same DB_DATABASE_NAME value in your .env file
+
+#### Execute Migrations. Example in PostgreSQL
+
+- Run:
+
+```sh
+    go run src/infra/migration/setup.go
+```
+
+#### Run your server
+
 - Run:
 
 ```sh
     go run server.go
 ```
 
-### Client 1
+#### Executing Client 1 case
 
 - Run:
 
@@ -45,7 +59,7 @@
     go run ./examples/execute-use-case/client.go YourUserId
 ```
 
-### Client 2
+#### Executing Client 2 case
 
 - Estabilish a Single Connection:
 
@@ -59,7 +73,7 @@
     go run ./examples/write-to-all-clients/client.go YourUserId
 ```
 
-### Client 3
+#### Executing Client 3 case
 
 - Estabilish a Single Connection:
 
