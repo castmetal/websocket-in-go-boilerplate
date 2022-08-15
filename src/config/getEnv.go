@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -13,7 +14,7 @@ func GetEnvVariable(key string) string {
 		log.Fatalf("Permission denied for get cwd command")
 	}
 
-	env := os.Getenv("ENV")
+	env := strings.ToLower(os.Getenv("ENV"))
 	if env == "production" {
 		return os.Getenv(key)
 	}
