@@ -56,7 +56,7 @@
 - Run:
 
 ```sh
-    go run ./examples/execute-use-case/client.go YourUserId
+    go run src/examples/execute-use-case/client.go YourUserId
 ```
 
 #### Executing Client 2 case
@@ -64,13 +64,13 @@
 - Estabilish a Single Connection:
 
 ```sh
-    go run ./examples/connect/client.go YourUserId
+    go run src/examples/connect/client.go YourUserId
 ```
 
 - Run:
 
 ```sh
-    go run ./examples/write-to-all-clients/client.go YourUserId
+    go run src/examples/write-to-all-clients/client.go YourUserId
 ```
 
 #### Executing Client 3 case
@@ -78,13 +78,13 @@
 - Estabilish a Single Connection:
 
 ```sh
-    go run ./examples/connect/client.go YourUserId
+    go run src/examples/connect/client.go YourUserId
 ```
 
 - Run:
 
 ```sh
-    go run ./examples/write-to-an-user/client.go YourUserId
+    go run src/examples/write-to-an-user/client.go YourUserId
 ```
 
 ### To do
