@@ -2,7 +2,7 @@ package config
 
 const (
 	PORT             = "8000"
-	ENV              = "staging"
+	ENV              = "production"
 	AUTH_HEADER      = "X-Auth"
 	SERVER_TYPE      = "ws"
 	SALT_CHARSET     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

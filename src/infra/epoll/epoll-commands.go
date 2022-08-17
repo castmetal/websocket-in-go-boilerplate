@@ -76,6 +76,10 @@ func (e *Epoll) Remove(conn net.Conn, userId string) error {
 	delete(e.Connections, fd)
 	delete(e.UserConnections.UserConn[userId], fd)
 
+	if len(e.UserConnections.UserConn[userId]) == 0 {
+		delete(e.UserConnections.UserConn, userId)
+	}
+
 	if len(e.Connections)%100 == 0 {
 		log.Printf("Total number of connections: %v", len(e.Connections))
 	}
@@ -101,6 +105,22 @@ func (e *Epoll) Wait() ([]net.Conn, error) {
 	}
 
 	return connections, nil
+}
+
+func (e *Epoll) GetConnections() map[int]net.Conn {
+
+	e.lock.RLock()
+	defer e.lock.RUnlock()
+
+	return e.Connections
+}
+
+func (e *Epoll) GetUserConnections(userId string) map[int]net.Conn {
+
+	e.lock.RLock()
+	defer e.lock.RUnlock()
+
+	return e.UserConnections.UserConn[userId]
 }
 
 func websocketFD(conn net.Conn) int {

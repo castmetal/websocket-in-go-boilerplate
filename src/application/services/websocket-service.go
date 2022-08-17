@@ -41,8 +41,9 @@ func (cfg *WebSocketRequest) EstabilishConnection(ctx context.Context, userId st
 	log.Printf("Connection Estabilished")
 
 	err := make(chan error)
-	go func(e chan error) {
-		defer cfg.removeConn(conn, userId)
+	done := make(chan bool)
+	go func(e chan error, done chan bool) {
+		defer cfg.removeConn(conn, userId, done)
 
 		for {
 			_, err := cfg.Epoll.Wait()
@@ -52,10 +53,10 @@ func (cfg *WebSocketRequest) EstabilishConnection(ctx context.Context, userId st
 
 			_, _, err = wsutil.ReadClientData(conn)
 			if err != nil {
-				log.Printf("Error read message %v", err)
+				log.Printf("Closing connection, reason: %v", err)
 
 				if err := cfg.Epoll.Remove(conn, userId); err != nil {
-					log.Printf("Failed to remove %v", err)
+					log.Printf("Failed to remove connection: %v", err)
 				}
 
 				e <- err
@@ -63,7 +64,7 @@ func (cfg *WebSocketRequest) EstabilishConnection(ctx context.Context, userId st
 			}
 
 		}
-	}(err)
+	}(err, done)
 
 	select {
 	case _err := <-err:
@@ -82,8 +83,9 @@ func (cfg *WebSocketRequest) ExecuteUseCase(ctx context.Context, useCase _core.I
 	}
 
 	err := make(chan error)
-	go func(e chan error) {
-		defer cfg.removeConn(conn, userId)
+	done := make(chan bool)
+	go func(e chan error, done chan bool) {
+		defer cfg.removeConn(conn, userId, done)
 
 		for {
 			_, err := cfg.Epoll.Wait()
@@ -93,10 +95,10 @@ func (cfg *WebSocketRequest) ExecuteUseCase(ctx context.Context, useCase _core.I
 
 			msg, op, err := wsutil.ReadClientData(conn)
 			if err != nil {
-				log.Printf("Error read message %v", err)
+				log.Printf("Closing connection, reason: %v", err)
 
 				if err := cfg.Epoll.Remove(conn, userId); err != nil {
-					log.Printf("Failed to remove %v", err)
+					log.Printf("Failed to remove connection: %v", err)
 				}
 
 				e <- err
@@ -119,40 +121,49 @@ func (cfg *WebSocketRequest) ExecuteUseCase(ctx context.Context, useCase _core.I
 			}
 		}
 
-	}(err)
+	}(err, done)
 
 	select {
 	case _err := <-err:
 		return false, _err
-	default:
+	case <-done:
 		return true, nil
 	}
 
 }
 
 func (cfg *WebSocketRequest) WriteToAllClients(ctx context.Context, userId string, conn net.Conn) (bool, error) {
-	go func() {
+	err := make(chan error)
+	done := make(chan bool)
+	go func(e chan error, done chan bool) {
 		defer conn.Close()
 
 		for {
 			receivedMessage, op, err := wsutil.ReadClientData(conn)
 			if err != nil {
+				e <- err
 				break
 			}
 
-			connections := cfg.Epoll.Connections
-			cfg.writeMessageToAllConnections(connections, op, receivedMessage, conn, userId)
+			connections := cfg.Epoll.GetConnections()
+			cfg.writeMessageToAllConnections(connections, op, receivedMessage, conn, userId, done)
 
 			break
 		}
+	}(err, done)
 
-	}()
-
-	return true, nil
+	select {
+	case _err := <-err:
+		return false, _err
+	case <-done:
+		return true, nil
+	}
 }
 
 func (cfg *WebSocketRequest) WriteToAnUser(ctx context.Context, userId string, conn net.Conn) (bool, error) {
-	go func() {
+	err := make(chan error)
+	done := make(chan bool)
+	go func(e chan error, done chan bool) {
 		defer conn.Close()
 
 		for {
@@ -161,23 +172,30 @@ func (cfg *WebSocketRequest) WriteToAnUser(ctx context.Context, userId string, c
 				break
 			}
 
-			connections := cfg.Epoll.UserConnections.UserConn[userId]
-			cfg.writeMessageToAllConnections(connections, op, receivedMessage, conn, userId)
+			connections := cfg.Epoll.GetUserConnections(userId)
+			cfg.writeMessageToAllConnections(connections, op, receivedMessage, conn, userId, done)
 
 			break
 		}
 
-	}()
+	}(err, done)
 
-	return true, nil
+	select {
+	case _err := <-err:
+		return false, _err
+	case <-done:
+		return true, nil
+	}
 }
 
-func (cfg *WebSocketRequest) removeConn(conn net.Conn, userId string) {
+func (cfg *WebSocketRequest) removeConn(conn net.Conn, userId string, done chan bool) {
 	if err := cfg.Epoll.Remove(conn, userId); err != nil {
-		log.Printf("Failed to remove %v", err)
+		log.Printf("Failed to remove connection: %v", err)
 	}
 
 	conn.Close()
+
+	done <- true
 }
 
 func (cfg *WebSocketRequest) writeMessageToAllConnections(
@@ -185,6 +203,7 @@ func (cfg *WebSocketRequest) writeMessageToAllConnections(
 	op ws.OpCode, receivedMessage []byte,
 	conn net.Conn,
 	userId string,
+	done chan bool,
 ) {
 	for _, epConn := range connections {
 		if epConn == nil {
@@ -193,10 +212,15 @@ func (cfg *WebSocketRequest) writeMessageToAllConnections(
 
 		err := wsutil.WriteServerMessage(epConn, op, receivedMessage)
 		if err != nil {
-			cfg.removeConn(conn, userId)
+			if err := cfg.Epoll.Remove(conn, userId); err != nil {
+				log.Printf("Failed to remove connection: %v", err)
+			}
 			epConn.Close()
 			continue
 		}
 
 	}
+
+	defer conn.Close()
+	done <- true
 }

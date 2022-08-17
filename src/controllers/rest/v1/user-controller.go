@@ -41,7 +41,11 @@ func EstabilishConnection(epoll *_epoll.Epoll) func(w http.ResponseWriter, r *ht
 			return
 		}
 
-		ws.EstabilishConnection(context.Background(), userId, conn)
+		_, err = ws.EstabilishConnection(context.Background(), userId, conn)
+		if err != nil {
+			conn.Close()
+			return
+		}
 	}
 }
 
@@ -57,9 +61,7 @@ func CreateUserWithSocket(epoll *_epoll.Epoll) func(w http.ResponseWriter, r *ht
 
 		conn, err := WsHandshake(w, r)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Invalid Connection"))
-
+			conn.Close()
 			return
 		}
 
@@ -68,17 +70,13 @@ func CreateUserWithSocket(epoll *_epoll.Epoll) func(w http.ResponseWriter, r *ht
 		var dto = &_dtos.CreateUserDTO{}
 		useCase, err := _use_cases.NewCreateUser(userRepository, dto)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-
+			conn.Close()
 			return
 		}
 
 		_, err = ws.ExecuteUseCase(context.Background(), useCase, userId, conn)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-
+			conn.Close()
 			return
 		}
 	}
@@ -96,13 +94,15 @@ func WriteMessageToAnUser(epoll *_epoll.Epoll) func(w http.ResponseWriter, r *ht
 
 		conn, err := WsHandshake(w, r)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Invalid Connection"))
-
+			conn.Close()
 			return
 		}
 
-		ws.WriteToAnUser(context.Background(), userId, conn)
+		_, err = ws.WriteToAnUser(context.Background(), userId, conn)
+		if err != nil {
+			conn.Close()
+			return
+		}
 	}
 }
 
@@ -118,13 +118,15 @@ func WriteMessageToAllUsers(epoll *_epoll.Epoll) func(w http.ResponseWriter, r *
 
 		conn, err := WsHandshake(w, r)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Invalid Connection"))
-
+			conn.Close()
 			return
 		}
 
-		ws.WriteToAllClients(context.Background(), userId, conn)
+		_, err = ws.WriteToAllClients(context.Background(), userId, conn)
+		if err != nil {
+			conn.Close()
+			return
+		}
 	}
 }
 

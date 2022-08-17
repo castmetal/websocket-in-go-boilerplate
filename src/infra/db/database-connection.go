@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func NewDatabaseConnection() (*gorm.DB, error) {
@@ -21,7 +22,15 @@ func NewDatabaseConnection() (*gorm.DB, error) {
 		_config.SystemParams.DB_TIME_ZONE,
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	config := &gorm.Config{}
+
+	if _config.SystemParams.ENV == "production" {
+		config = &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Silent),
+		}
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn), config)
 	if err != nil {
 		return nil, err
 	}
